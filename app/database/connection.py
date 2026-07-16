@@ -17,9 +17,16 @@ class DatabaseManager:
     def get_connection(self) -> sqlite3.Connection:
         conn = sqlite3.connect(str(self.db_path))
         conn.row_factory = sqlite3.Row
-        # Enable foreign keys
         conn.execute("PRAGMA foreign_keys = ON")
+        conn.execute("PRAGMA busy_timeout = 5000")
+        conn.execute("PRAGMA journal_mode = WAL")
         return conn
+
+    def check_integrity(self) -> bool:
+        """Return whether SQLite reports an internally consistent database."""
+        with self.get_connection() as conn:
+            row = conn.execute("PRAGMA integrity_check").fetchone()
+            return row is not None and row[0] == "ok"
 
     def _init_db(self) -> None:
         with self.get_connection() as conn:

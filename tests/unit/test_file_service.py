@@ -3,6 +3,8 @@ from pathlib import Path
 from app.services.file_service import FileService
 from app.repositories.audit_repository import AuditRepository
 from app.models.project import Project, ProjectMetadata, ProjectFeatures
+from app.models.audit import AuditEntry, UndoStatus
+from unittest.mock import patch
 
 @pytest.fixture
 def audit_repo():
@@ -64,9 +66,55 @@ def test_file_versioning_and_undo(tmp_path: Path, file_service: FileService, dum
     assert logs[1].action == "OVERWRITE"
     assert logs[1].previous_version_path is not None
     
-    file_service.undo_last_import(dummy_project)
+    undo_result = file_service.undo_last_import(dummy_project)
     
+    assert undo_result.status == UndoStatus.SUCCESS
     assert dest_path.read_text() == '{"v": 1}'
     logs = file_service.audit_repo.read_logs(project_dir)
     assert len(logs) == 3
     assert logs[-1].action == "UNDO"
+    assert logs[-1].undo_of_event_id == logs[1].event_id
+
+
+def test_undo_rejects_tampered_audit_path(tmp_path: Path, file_service: FileService, dummy_project: Project) -> None:
+    protected_file = tmp_path / "protected.txt"
+    protected_file.write_text("keep")
+    file_service.audit_repo.append_log(
+        Path(dummy_project.path),
+        AuditEntry(
+            timestamp="2026",
+            action="IMPORT",
+            file_name="protected.txt",
+            destination_path="../../protected.txt",
+        ),
+    )
+
+    result = file_service.undo_last_import(dummy_project)
+
+    assert result.status == UndoStatus.PATH_REJECTED
+    assert protected_file.read_text() == "keep"
+
+
+def test_undo_does_not_audit_success_when_target_is_missing(
+    tmp_path: Path, file_service: FileService, dummy_project: Project
+) -> None:
+    file_service.audit_repo.append_log(
+        Path(dummy_project.path),
+        AuditEntry(timestamp="2026", action="IMPORT", file_name="gone.txt", destination_path="00_Inbox/gone.txt"),
+    )
+
+    result = file_service.undo_last_import(dummy_project)
+
+    assert result.status == UndoStatus.TARGET_MISSING
+    assert len(file_service.audit_repo.read_logs(Path(dummy_project.path))) == 1
+
+
+def test_import_rolls_back_when_audit_write_fails(
+    tmp_path: Path, file_service: FileService, dummy_project: Project
+) -> None:
+    source_file = tmp_path / "config.json"
+    source_file.write_text("{}")
+    with patch.object(file_service.audit_repo, "append_log", side_effect=RuntimeError("Denied")):
+        assert file_service.import_file_for_artifact(dummy_project, str(source_file)) is None
+
+    assert not (Path(dummy_project.path) / "03_Implementation/configs/config.json").exists()

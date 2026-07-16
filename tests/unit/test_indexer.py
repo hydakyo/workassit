@@ -30,3 +30,4 @@ def test_indexer_sync(tmp_path: Path) -> None:
         task_rows = cursor.fetchall()
         assert len(task_rows) == 1
         assert task_rows[0]['title'] == "Test Task"
+    assert db_manager.check_integrity()

@@ -19,7 +19,8 @@ class TemplateLoader:
                 templates.append({
                     "id": p.stem,
                     "name": data.get("name", p.stem),
-                    "description": data.get("description", "")
+                    "description": data.get("description", ""),
+                    "version": str(data.get("version", "1.0")),
                 })
             except Exception:
                 pass
@@ -44,6 +45,7 @@ class TemplateLoader:
             template_id=template_id,
             name=data.get("name", template_id),
             description=data.get("description", ""),
+            version=str(data.get("version", "1.0")),
             folder_structure=data.get("folder_structure", []),
             phases=phases,
             default_tasks=tasks,

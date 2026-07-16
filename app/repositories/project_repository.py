@@ -5,7 +5,7 @@ import dataclasses
 from datetime import datetime, timezone
 
 from app.models.project import Project, ProjectMetadata, ProjectFeatures
-from app.models.domain import Task, Artifact, Delivery
+from app.models.domain import Artifact, Delivery, Device, Phase, Site, Task
 from app.config.constants import PROJECT_FILENAME
 from app.utils.atomic_json import read_json, write_json_atomic
 
@@ -71,6 +71,21 @@ class ProjectRepository:
             valid_fields = {f.name for f in dataclasses.fields(Delivery)}
             filtered_d = {k: v for k, v in d.items() if k in valid_fields}
             deliveries.append(Delivery(**filtered_d))
+
+        phases = []
+        for phase in data.get("phases", []):
+            valid_fields = {f.name for f in dataclasses.fields(Phase)}
+            phases.append(Phase(**{k: v for k, v in phase.items() if k in valid_fields}))
+
+        sites = []
+        for site in data.get("sites", []):
+            valid_fields = {f.name for f in dataclasses.fields(Site)}
+            sites.append(Site(**{k: v for k, v in site.items() if k in valid_fields}))
+
+        devices = []
+        for device in data.get("devices", []):
+            valid_fields = {f.name for f in dataclasses.fields(Device)}
+            devices.append(Device(**{k: v for k, v in device.items() if k in valid_fields}))
             
         return Project(
             path=str(directory), 
@@ -78,7 +93,10 @@ class ProjectRepository:
             template_id=data.get("template_id", ""),
             tasks=tasks,
             artifacts=artifacts,
-            deliveries=deliveries
+            deliveries=deliveries,
+            phases=phases,
+            sites=sites,
+            devices=devices,
         )
 
     def create_project(self, project: Project) -> None:
@@ -106,7 +124,10 @@ class ProjectRepository:
             "template_id": project.template_id,
             "tasks": [dataclasses.asdict(t) for t in project.tasks],
             "artifacts": [dataclasses.asdict(a) for a in project.artifacts],
-            "deliveries": [dataclasses.asdict(d) for d in project.deliveries]
+            "deliveries": [dataclasses.asdict(d) for d in project.deliveries],
+            "phases": [dataclasses.asdict(phase) for phase in project.phases],
+            "sites": [dataclasses.asdict(site) for site in project.sites],
+            "devices": [dataclasses.asdict(device) for device in project.devices],
         }
         
         write_json_atomic(project_file, data)

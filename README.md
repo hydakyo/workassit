@@ -32,6 +32,8 @@ Open **Settings → Artificial Intelligence**, select a provider and save its Ba
 
 The build includes the static `web` assets needed by the PyWebView interface.
 
+Operational backup, restore, delivery and recovery guidance is in [docs/OPERATIONS.md](docs/OPERATIONS.md).
+
 ## Running Tests and Quality Checks
 ```powershell
 .\.venv\Scripts\python.exe -m pytest

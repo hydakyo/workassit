@@ -1,4 +1,5 @@
 {
+  "version": "1.0",
   "name": "Standard IT Project",
   "description": "A standard template for generic IT deployment projects.",
   "folder_structure": [

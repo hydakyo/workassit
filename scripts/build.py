@@ -9,12 +9,16 @@ def main() -> None:
     root_dir = Path(__file__).parent.parent
     main_script = root_dir / "main.py"
     web_dir = root_dir / "web"
+    templates_dir = root_dir / "app" / "templates"
     
     if not main_script.exists():
         print(f"Error: Could not find main.py at {main_script}")
         sys.exit(1)
     if not web_dir.is_dir():
         print(f"Error: Could not find web assets at {web_dir}")
+        sys.exit(1)
+    if not templates_dir.is_dir():
+        print(f"Error: Could not find templates at {templates_dir}")
         sys.exit(1)
         
     build_cmd = [
@@ -25,6 +29,7 @@ def main() -> None:
         "--name", "ProjectOS",
         "--clean",
         "--add-data", f"{web_dir}{os.pathsep}web",
+        "--add-data", f"{templates_dir}{os.pathsep}app/templates",
         str(main_script)
     ]
     try:

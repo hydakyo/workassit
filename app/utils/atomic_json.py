@@ -1,6 +1,7 @@
 import os
 import json
 import logging
+import shutil
 from pathlib import Path
 from typing import Any, Dict
 
@@ -45,7 +46,7 @@ def write_json_atomic(file_path: Path, data: Dict[str, Any]) -> None:
             
         # Backup existing file if it exists
         if file_path.exists():
-            os.replace(file_path, bak_path)
+            shutil.copy2(file_path, bak_path)
             
         # Atomically replace
         os.replace(temp_path, file_path)

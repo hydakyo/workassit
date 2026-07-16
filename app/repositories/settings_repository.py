@@ -1,7 +1,7 @@
 import logging
 from pathlib import Path
 
-from app.config.settings import AppSettings
+from app.config.settings import AppSettings, normalize_ai_provider
 from app.config.constants import SETTINGS_FILE
 from app.utils.atomic_json import read_json, write_json_atomic
 import keyring
@@ -17,29 +17,38 @@ class SettingsRepository:
             default_settings = AppSettings()
             self.save_settings(default_settings)
             return default_settings
-        
+
         try:
             data = read_json(self.file_path)
-            # Basic validation
-            if data.get("schema_version") != 1:
-                logger.warning("Unknown schema version in settings.")
-                
-            # Load secure API key from keyring
-            api_key = keyring.get_password("ProjectOS", "ai_api_key") or ""
-            
-            return AppSettings(
-                schema_version=data.get("schema_version", 1),
-                workspace_roots=data.get("workspace_roots", []),
-                theme=data.get("theme", "dark"),
-                default_author=data.get("default_author", ""),
-                ai_provider=data.get("ai_provider", "None"),
-                ai_api_key=api_key,
-                ai_base_url=data.get("ai_base_url", ""),
-                ai_model=data.get("ai_model", "gpt-4o-mini"),
-            )
-        except Exception as e:
-            logger.error(f"Failed to load settings: {e}. Returning default settings.")
+        except (OSError, ValueError) as exc:
+            logger.error("Failed to load settings JSON: %s", exc)
             return AppSettings()
+
+        if data.get("schema_version") != 1:
+            logger.warning("Unknown schema version in settings.")
+        try:
+            api_key = keyring.get_password("ProjectOS", "ai_api_key") or ""
+        except Exception:
+            logger.error("Could not read AI key from the operating-system keyring.")
+            api_key = ""
+
+        try:
+            provider = normalize_ai_provider(str(data.get("ai_provider", "none")))
+        except ValueError:
+            logger.warning("Unsupported AI provider type in settings; AI has been disabled.")
+            provider = "none"
+
+        return AppSettings(
+            schema_version=data.get("schema_version", 1),
+            workspace_roots=data.get("workspace_roots", []),
+            theme=data.get("theme", "dark"),
+            default_author=data.get("default_author", ""),
+            ai_provider=provider,
+            ai_api_key=api_key,
+            ai_base_url=data.get("ai_base_url", ""),
+            ai_model=data.get("ai_model", "gpt-4o-mini"),
+            ai_streaming=data.get("ai_streaming", True),
+        )
 
     def save_settings(self, settings: AppSettings) -> None:
         data = {
@@ -47,22 +56,16 @@ class SettingsRepository:
             "workspace_roots": settings.workspace_roots,
             "theme": settings.theme,
             "default_author": settings.default_author,
-            "ai_provider": settings.ai_provider,
+            "ai_provider": normalize_ai_provider(settings.ai_provider),
             "ai_base_url": settings.ai_base_url,
             "ai_model": settings.ai_model,
+            "ai_streaming": settings.ai_streaming,
         }
         
-        # Save secure API key to keyring if provided
-        try:
-            if settings.ai_api_key:
+        if settings.ai_api_key:
+            try:
                 keyring.set_password("ProjectOS", "ai_api_key", settings.ai_api_key)
-            else:
-                # If empty, try to delete it
-                try:
-                    keyring.delete_password("ProjectOS", "ai_api_key")
-                except keyring.errors.PasswordDeleteError:
-                    pass
-        except Exception as e:
-            logger.error(f"Failed to securely save API key: {e}")
-            
+            except Exception as exc:
+                logger.error("Could not save AI key to the operating-system keyring.")
+                raise RuntimeError("AI key could not be stored securely.") from exc
         write_json_atomic(self.file_path, data)

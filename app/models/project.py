@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from dataclasses import dataclass, field
 from typing import List
 
-from app.models.domain import Task, Artifact, Delivery
+from app.models.domain import Artifact, Delivery, Device, Phase, Site, Task
 
 @dataclass
 class ProjectFeatures:
@@ -44,3 +44,6 @@ class Project:
     tasks: List[Task] = field(default_factory=list)
     artifacts: List[Artifact] = field(default_factory=list)
     deliveries: List[Delivery] = field(default_factory=list)
+    phases: List[Phase] = field(default_factory=list)
+    sites: List[Site] = field(default_factory=list)
+    devices: List[Device] = field(default_factory=list)

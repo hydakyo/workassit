@@ -1,4 +1,5 @@
 import logging
+import os
 import sys
 import webview
 
@@ -13,6 +14,9 @@ from app.services.workspace_scan_service import WorkspaceScanService
 from app.services.project_service import ProjectService
 from app.services.file_service import FileService
 from app.services.delivery_service import DeliveryService
+from app.services.search_service import SearchService
+from app.services.backup_service import BackupService
+from app.services.rollout_service import RolloutService
 
 from app.bridge.api_bridge import ApiBridge
 
@@ -36,6 +40,9 @@ def main() -> None:
         
         db_manager = DatabaseManager()
         indexer = Indexer(db_manager)
+        search_service = SearchService(db_manager)
+        backup_service = BackupService()
+        rollout_service = RolloutService()
         template_loader = TemplateLoader()
         
         # 3. Init services
@@ -48,13 +55,17 @@ def main() -> None:
         api_bridge = ApiBridge(
             settings_repo, project_repo, scan_service, project_service, 
             file_service, delivery_service, audit_repo, checklist_repo,
-            template_loader
+            template_loader,
+            search_service=search_service,
+            backup_service=backup_service,
+            rollout_service=rollout_service,
         )
         
         # 5. Start PyWebView
         html_path = str(get_web_directory() / "index.html")
         webview.create_window('Project OS', url=html_path, js_api=api_bridge, width=1200, height=800)
-        webview.start(debug=True)
+        debug_mode = os.environ.get("PROJECT_OS_DEBUG", "").lower() in {"1", "true", "yes"}
+        webview.start(debug=debug_mode)
         
     except Exception as e:
         logger.critical(f"Application crashed: {e}", exc_info=True)

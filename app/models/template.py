@@ -7,6 +7,7 @@ class ProjectTemplate:
     template_id: str
     name: str
     description: str
+    version: str = "1.0"
     folder_structure: List[str] = field(default_factory=list)
     phases: List[Phase] = field(default_factory=list)
     default_tasks: List[Task] = field(default_factory=list)

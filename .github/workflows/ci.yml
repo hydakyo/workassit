@@ -23,7 +23,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        pip install pytest ruff mypy
+        pip install -r requirements-dev.txt
         
     - name: Lint with Ruff
       run: |
@@ -36,3 +36,15 @@ jobs:
     - name: Run unit tests
       run: |
         pytest
+
+    - name: Build Windows package
+      run: |
+        python scripts/build.py
+        if (-not (Test-Path "dist/ProjectOS/_internal/web/index.html")) { throw "Bundled frontend asset is missing" }
+        if (-not (Test-Path "dist/ProjectOS/_internal/app/templates/default.json")) { throw "Bundled template asset is missing" }
+
+    - name: Upload Windows package
+      uses: actions/upload-artifact@v4
+      with:
+        name: ProjectOS-windows
+        path: dist/ProjectOS

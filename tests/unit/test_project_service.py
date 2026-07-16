@@ -74,3 +74,17 @@ def test_create_project_exists(tmp_path: Path, service: ProjectService):
     # Second creation should fail
     with pytest.raises(FileExistsError):
         service.create_new_project(root, "Test", "Customer", "type")
+
+
+def test_create_project_preserves_interrupted_staging_operation(
+    tmp_path: Path, service: ProjectService
+) -> None:
+    recovery_dir = tmp_path / ".projectos" / "staging" / "interrupted-operation"
+    recovery_dir.mkdir(parents=True)
+    recovery_file = recovery_dir / "project.json"
+    recovery_file.write_text('{"recovery": true}')
+
+    service.create_new_project(tmp_path, "Test", "Customer", "type")
+
+    assert recovery_file.read_text() == '{"recovery": true}'
+    assert (tmp_path / "Test").is_dir()

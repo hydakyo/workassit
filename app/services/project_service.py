@@ -1,4 +1,5 @@
 import logging
+import uuid
 from pathlib import Path
 from typing import Optional
 
@@ -6,6 +7,8 @@ from app.models.project import Project, ProjectMetadata
 from app.repositories.project_repository import ProjectRepository
 from app.templates.loader import TemplateLoader
 from app.models.domain import Task, Artifact
+from app.utils.atomic_json import write_json_atomic
+from app.utils.path_validator import resolve_project_path
 
 logger = logging.getLogger(__name__)
 
@@ -34,12 +37,16 @@ class ProjectService:
         if project_dir.exists():
             raise FileExistsError(f"Directory already exists: {project_dir}")
             
-        staging_dir = root_path / f".staging_{safe_name}"
-        if staging_dir.exists():
-            import shutil
-            shutil.rmtree(staging_dir)
-            
-        staging_dir.mkdir(parents=True)
+        staging_root = resolve_project_path(root_path, ".projectos/staging")
+        staging_root.mkdir(parents=True, exist_ok=True)
+        operation_id = str(uuid.uuid4())
+        staging_dir = resolve_project_path(root_path, f".projectos/staging/{operation_id}")
+        staging_dir.mkdir()
+        manifest_path = resolve_project_path(root_path, f".projectos/staging/{operation_id}.json")
+        write_json_atomic(
+            manifest_path,
+            {"operation_id": operation_id, "operation": "create_project", "project_name": project_name},
+        )
         
         try:
             metadata = ProjectMetadata.create_new(
@@ -58,6 +65,18 @@ class ProjectService:
                 if template:
                     if template.folder_structure:
                         base_dirs = template.folder_structure
+                    project.phases = [
+                        type(phase)(
+                            name=phase.name,
+                            description=phase.description,
+                            entry_criteria=list(phase.entry_criteria),
+                            exit_criteria=list(phase.exit_criteria),
+                            required_artifacts=list(phase.required_artifacts),
+                            approval_status=phase.approval_status,
+                            blocking_issues=list(phase.blocking_issues),
+                        )
+                        for phase in template.phases
+                    ]
                         
                     # Copy tasks
                     for dt in template.default_tasks:
@@ -86,11 +105,11 @@ class ProjectService:
                 
             # Rename staging to final directory atomically
             staging_dir.rename(project_dir)
+            manifest_path.unlink()
             project.path = str(project_dir)
-        except Exception as e:
-            import shutil
-            shutil.rmtree(staging_dir, ignore_errors=True)
-            raise e
+        except Exception:
+            logger.exception("Project creation interrupted; staging operation %s was retained.", operation_id)
+            raise
             
         logger.info(f"Created new project '{project_name}' at {project_dir} using template '{template_id}'")
         return project

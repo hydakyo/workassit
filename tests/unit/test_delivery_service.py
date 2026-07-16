@@ -25,7 +25,7 @@ def test_delivery_service(tmp_path: Path):
         features=ProjectFeatures()
     )
     
-    art = Artifact(type="Config", path="03_Implementation/config.json")
+    art = Artifact(type="Config", path="03_Implementation/config.json", status="Approved")
     
     project = Project(path=str(project_dir), metadata=meta, artifacts=[art])
     
@@ -52,6 +52,29 @@ def test_delivery_service(tmp_path: Path):
         assert manifest_data["project_name"] == "Test"
         assert len(manifest_data["artifacts"]) == 1
         assert manifest_data["artifacts"][0]["type"] == "Config"
+        assert len(manifest_data["artifacts"][0]["sha256"]) == 64
+    assert len(project.deliveries[0].checksum) == 64
+
+
+def test_delivery_rejects_incomplete_project(tmp_path: Path) -> None:
+    project_dir = tmp_path / "project"
+    project_dir.mkdir()
+    metadata = ProjectMetadata(
+        schema_version=1,
+        project_id="test",
+        project_name="Test",
+        customer_name="Customer",
+        project_type="type",
+        stage="planning",
+        created_at="",
+        updated_at="",
+        features=ProjectFeatures(),
+    )
+    from app.models.domain import Task
+
+    project = Project(path=str(project_dir), metadata=metadata, tasks=[Task(title="Incomplete")])
+
+    assert DeliveryService().create_delivery_package(project) is None
 
 
 def test_delivery_prefers_template_delivery_directory(tmp_path: Path) -> None:
@@ -98,7 +121,10 @@ def test_delivery_keeps_artifacts_with_duplicate_names(tmp_path: Path) -> None:
     project = Project(
         path=str(project_dir),
         metadata=metadata,
-        artifacts=[Artifact(type="First", path="first/config.json"), Artifact(type="Second", path="second/config.json")],
+        artifacts=[
+            Artifact(type="First", path="first/config.json", status="Approved"),
+            Artifact(type="Second", path="second/config.json", status="Approved"),
+        ],
     )
 
     result = DeliveryService().create_delivery_package(project)
@@ -107,3 +133,29 @@ def test_delivery_keeps_artifacts_with_duplicate_names(tmp_path: Path) -> None:
     with zipfile.ZipFile(project_dir / result) as zip_file:
         names = zip_file.namelist()
         assert len([name for name in names if name.endswith("config.json")]) == 2
+
+
+def test_delivery_rejects_artifact_path_outside_project(tmp_path: Path) -> None:
+    project_dir = tmp_path / "project"
+    project_dir.mkdir()
+    outside_file = tmp_path / "outside.txt"
+    outside_file.write_text("protected")
+    metadata = ProjectMetadata(
+        schema_version=1,
+        project_id="test",
+        project_name="Test",
+        customer_name="Customer",
+        project_type="type",
+        stage="planning",
+        created_at="",
+        updated_at="",
+        features=ProjectFeatures(),
+    )
+    project = Project(
+        path=str(project_dir),
+        metadata=metadata,
+        artifacts=[Artifact(type="Unsafe", path="../outside.txt", status="Approved")],
+    )
+
+    assert DeliveryService().create_delivery_package(project) is None
+    assert outside_file.read_text() == "protected"

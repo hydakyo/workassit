@@ -1,3 +1,2 @@
 pywebview>=4.4.1
 keyring>=25.7.0
-pyinstaller>=6.21.0

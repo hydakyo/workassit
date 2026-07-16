@@ -1,5 +1,6 @@
 # tests/unit/test_atomic_json.py
 import pytest
+from unittest.mock import patch
 from pathlib import Path
 from app.utils.atomic_json import read_json, write_json_atomic
 
@@ -39,3 +40,23 @@ def test_atomic_write_fails_on_invalid_data(tmp_path: Path):
         write_json_atomic(file_path, invalid_data)  # type: ignore
         
     assert not file_path.exists()
+
+
+def test_atomic_write_keeps_current_file_when_replace_fails(tmp_path: Path) -> None:
+    file_path = tmp_path / "test.json"
+    write_json_atomic(file_path, {"ver": 1})
+
+    import app.utils.atomic_json as atomic_json
+
+    original_replace = atomic_json.os.replace
+
+    def fail_primary_replace(source: Path | str, destination: Path | str) -> None:
+        if Path(destination) == file_path:
+            raise OSError("replace failed")
+        original_replace(source, destination)
+
+    with patch("app.utils.atomic_json.os.replace", side_effect=fail_primary_replace):
+        with pytest.raises(OSError, match="replace failed"):
+            write_json_atomic(file_path, {"ver": 2})
+
+    assert read_json(file_path) == {"ver": 1}

@@ -1,8 +1,7 @@
 import logging
 import sys
-import threading
-import uvicorn
 import webview
+from pathlib import Path
 
 from app.utils.logging_config import setup_logging
 from app.repositories.settings_repository import SettingsRepository
@@ -15,16 +14,13 @@ from app.services.project_service import ProjectService
 from app.services.file_service import FileService
 from app.services.delivery_service import DeliveryService
 
-from app.api.server import create_app
-
-def start_api_server(app):
-    uvicorn.run(app, host="127.0.0.1", port=8000, log_level="error")
+from app.bridge.api_bridge import ApiBridge
 
 def main() -> None:
     # 1. Init logging
     setup_logging()
     logger = logging.getLogger(__name__)
-    logger.info("Starting Project OS (Hybrid Mode)")
+    logger.info("Starting Project OS (JS Bridge Mode)")
     
     try:
         # 2. Init repositories
@@ -33,25 +29,32 @@ def main() -> None:
         audit_repo = AuditRepository()
         checklist_repo = ChecklistRepository()
         
+        # 2.5 Init Database and Templates
+        from app.database.connection import DatabaseManager
+        from app.database.indexer import Indexer
+        from app.templates.loader import TemplateLoader
+        
+        db_manager = DatabaseManager()
+        indexer = Indexer(db_manager)
+        template_loader = TemplateLoader()
+        
         # 3. Init services
-        scan_service = WorkspaceScanService(project_repo)
-        project_service = ProjectService(project_repo)
+        scan_service = WorkspaceScanService(project_repo, indexer)
+        project_service = ProjectService(project_repo, template_loader)
         file_service = FileService(audit_repo)
         delivery_service = DeliveryService()
         
-        # 4. Create FastAPI app
-        api_app = create_app(
+        # 4. Create Api Bridge
+        api_bridge = ApiBridge(
             settings_repo, project_repo, scan_service, project_service, 
-            file_service, delivery_service, audit_repo, checklist_repo
+            file_service, delivery_service, audit_repo, checklist_repo,
+            template_loader
         )
         
-        # 5. Start API Server in background thread
-        api_thread = threading.Thread(target=start_api_server, args=(api_app,), daemon=True)
-        api_thread.start()
-        
-        # 6. Start PyWebView
-        webview.create_window('Project OS', 'http://127.0.0.1:8000', width=1200, height=800)
-        webview.start()
+        # 5. Start PyWebView
+        html_path = str(Path(__file__).parent / 'web' / 'index.html')
+        webview.create_window('Project OS', url=html_path, js_api=api_bridge, width=1200, height=800)
+        webview.start(debug=True)
         
     except Exception as e:
         logger.critical(f"Application crashed: {e}", exc_info=True)

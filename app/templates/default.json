@@ -1,0 +1,60 @@
+{
+  "name": "Standard IT Project",
+  "description": "A standard template for generic IT deployment projects.",
+  "folder_structure": [
+    "00_Inbox",
+    "01_Planning",
+    "02_Design",
+    "03_Implementation",
+    "04_Testing",
+    "05_Delivery"
+  ],
+  "phases": [
+    {
+      "name": "Initiation",
+      "description": "Project kickoff and scoping"
+    },
+    {
+      "name": "Design",
+      "description": "High Level and Low Level Design"
+    },
+    {
+      "name": "Implementation",
+      "description": "System deployment and configuration"
+    },
+    {
+      "name": "Testing",
+      "description": "UAT and validation"
+    },
+    {
+      "name": "Handover",
+      "description": "Project closure and handover to operations"
+    }
+  ],
+  "default_tasks": [
+    {
+      "title": "Kickoff Meeting",
+      "description": "Conduct kickoff meeting with stakeholders",
+      "phase": "Initiation",
+      "priority": "High"
+    },
+    {
+      "title": "Create HLD",
+      "description": "Create High Level Design document",
+      "phase": "Design",
+      "priority": "High"
+    },
+    {
+      "title": "UAT Sign-off",
+      "description": "Obtain UAT sign-off from customer",
+      "phase": "Testing",
+      "priority": "Critical"
+    }
+  ],
+  "required_artifacts": [
+    "HLD",
+    "LLD",
+    "UAT_Report",
+    "As_Built_Doc"
+  ]
+}

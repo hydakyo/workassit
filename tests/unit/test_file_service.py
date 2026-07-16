@@ -33,41 +33,40 @@ def test_file_import_and_routing(tmp_path: Path, file_service: FileService, dumm
     source_file = tmp_path / "config.json"
     source_file.write_text("{}")
     
-    success = file_service.import_file(dummy_project, str(source_file))
-    assert success
+    rel_path = file_service.import_file_for_artifact(dummy_project, str(source_file))
     
+    assert rel_path is not None
     project_dir = Path(dummy_project.path)
-    dest_file = project_dir / "03_Implementation/configs/config.json"
-    assert dest_file.exists()
+    dest_path = project_dir / rel_path
+    assert dest_path.exists()
+    assert dest_path.parent.name == "configs"
     
     logs = file_service.audit_repo.read_logs(project_dir)
     assert len(logs) == 1
     assert logs[0].action == "IMPORT"
+    assert logs[0].file_name == "config.json"
 
 def test_file_versioning_and_undo(tmp_path: Path, file_service: FileService, dummy_project: Project):
     source_file = tmp_path / "config.json"
     source_file.write_text('{"v": 1}')
     
-    file_service.import_file(dummy_project, str(source_file))
+    file_service.import_file_for_artifact(dummy_project, str(source_file))
     
     source_file.write_text('{"v": 2}')
-    file_service.import_file(dummy_project, str(source_file))
+    file_service.import_file_for_artifact(dummy_project, str(source_file))
     
     project_dir = Path(dummy_project.path)
-    dest_file = project_dir / "03_Implementation/configs/config.json"
-    
-    assert dest_file.read_text() == '{"v": 2}'
+    dest_path = project_dir / "03_Implementation/configs/config.json"
+    assert dest_path.read_text() == '{"v": 2}'
     
     logs = file_service.audit_repo.read_logs(project_dir)
     assert len(logs) == 2
     assert logs[1].action == "OVERWRITE"
     assert logs[1].previous_version_path is not None
     
-    # Test undo
-    success = file_service.undo_last_import(dummy_project)
-    assert success
-    assert dest_file.read_text() == '{"v": 1}'
+    file_service.undo_last_import(dummy_project)
     
-    logs_after_undo = file_service.audit_repo.read_logs(project_dir)
-    assert len(logs_after_undo) == 3
-    assert logs_after_undo[2].action == "UNDO"
+    assert dest_path.read_text() == '{"v": 1}'
+    logs = file_service.audit_repo.read_logs(project_dir)
+    assert len(logs) == 3
+    assert logs[-1].action == "UNDO"

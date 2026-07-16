@@ -29,11 +29,11 @@ class FileService:
         dest_dir.mkdir(parents=True, exist_ok=True)
         return dest_dir
 
-    def import_file(self, project: Project, source_path_str: str) -> bool:
+    def import_file_for_artifact(self, project: Project, source_path_str: str) -> Optional[str]:
         source_path = Path(source_path_str)
         if not source_path.is_file():
             logger.error(f"Source file not found: {source_path}")
-            return False
+            return None
             
         project_dir = Path(project.path)
         dest_dir = self._get_destination_dir(project_dir, source_path.suffix)
@@ -58,24 +58,25 @@ class FileService:
                 version_path = str(backup_path.relative_to(project_dir))
             except Exception as e:
                 logger.error(f"Failed to create version backup for {dest_path}: {e}")
-                return False
+                return None
                 
         try:
             shutil.copy2(source_path, dest_path)
         except Exception as e:
             logger.error(f"Failed to import file to {dest_path}: {e}")
-            return False
+            return None
             
+        rel_dest_path = str(dest_path.relative_to(project_dir))
         entry = AuditEntry(
             timestamp=now,
             action=action,
             file_name=source_path.name,
-            destination_path=str(dest_path.relative_to(project_dir)),
+            destination_path=rel_dest_path,
             previous_version_path=version_path,
             user="System" # In phase 1/3, user is implicit
         )
         self.audit_repo.append_log(project_dir, entry)
-        return True
+        return rel_dest_path
 
     def undo_last_import(self, project: Project) -> bool:
         project_dir = Path(project.path)

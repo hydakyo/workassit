@@ -1,6 +1,9 @@
 import uuid
 from datetime import datetime, timezone
 from dataclasses import dataclass, field
+from typing import List
+
+from app.models.domain import Task, Artifact, Delivery
 
 @dataclass
 class ProjectFeatures:
@@ -37,3 +40,7 @@ class ProjectMetadata:
 class Project:
     path: str
     metadata: ProjectMetadata
+    template_id: str = ""
+    tasks: List[Task] = field(default_factory=list)
+    artifacts: List[Artifact] = field(default_factory=list)
+    deliveries: List[Delivery] = field(default_factory=list)

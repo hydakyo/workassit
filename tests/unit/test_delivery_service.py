@@ -1,19 +1,17 @@
 from pathlib import Path
+import zipfile
+import json
 from app.services.delivery_service import DeliveryService
 from app.models.project import Project, ProjectMetadata, ProjectFeatures
+from app.models.domain import Artifact
 
 def test_delivery_service(tmp_path: Path):
     project_dir = tmp_path / "dummy_project"
     project_dir.mkdir()
     
-    # Create dummy files
+    # Create dummy artifacts
     (project_dir / "03_Implementation").mkdir()
-    (project_dir / "03_Implementation" / "config.json").write_text("{}")
-    
-    # Create excluded files
-    (project_dir / ".versions").mkdir()
-    (project_dir / ".versions" / "old.json").write_text("{}")
-    (project_dir / "project.json").write_text("{}")
+    (project_dir / "03_Implementation" / "config.json").write_text('{"key": "value"}')
     
     meta = ProjectMetadata(
         schema_version=1,
@@ -26,11 +24,31 @@ def test_delivery_service(tmp_path: Path):
         updated_at="",
         features=ProjectFeatures()
     )
-    project = Project(path=str(project_dir), metadata=meta)
+    
+    art = Artifact(type="Config", path="03_Implementation/config.json")
+    
+    project = Project(path=str(project_dir), metadata=meta, artifacts=[art])
     
     service = DeliveryService()
-    zip_path = service.create_delivery_package(project)
+    rel_zip_path = service.create_delivery_package(project)
     
-    assert zip_path is not None
-    assert Path(zip_path).exists()
-    assert Path(zip_path).suffix == ".zip"
+    assert rel_zip_path is not None
+    zip_path = project_dir / rel_zip_path
+    
+    assert zip_path.exists()
+    assert zip_path.suffix == ".zip"
+    
+    # Check if delivery object was added
+    assert len(project.deliveries) == 1
+    assert project.deliveries[0].version == "1.0"
+    
+    # Check ZIP contents
+    with zipfile.ZipFile(zip_path, 'r') as zf:
+        namelist = zf.namelist()
+        assert "config.json" in namelist
+        assert "manifest.json" in namelist
+        
+        manifest_data = json.loads(zf.read("manifest.json"))
+        assert manifest_data["project_name"] == "Test"
+        assert len(manifest_data["artifacts"]) == 1
+        assert manifest_data["artifacts"][0]["type"] == "Config"

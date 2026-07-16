@@ -1,8 +1,10 @@
 import logging
 from pathlib import Path
 from typing import Optional
+import dataclasses
 
 from app.models.project import Project, ProjectMetadata, ProjectFeatures
+from app.models.domain import Task, Artifact, Delivery
 from app.config.constants import PROJECT_FILENAME
 from app.utils.atomic_json import read_json, write_json_atomic
 
@@ -24,7 +26,6 @@ class ProjectRepository:
         except Exception as e:
             raise ValueError(f"Invalid JSON in {project_file}: {e}")
             
-        # Minimal schema validation
         required_fields = [
             "schema_version", "project_id", "project_name", 
             "customer_name", "project_type", "stage", 
@@ -33,34 +34,55 @@ class ProjectRepository:
         for field in required_fields:
             if field not in data:
                 raise ValueError(f"Missing required field '{field}' in {project_file}")
-        try:
-            features_data = data.get("features", {})
-            features = ProjectFeatures(
-                design=features_data.get("design", False),
-                implementation=features_data.get("implementation", False)
-            )
+                
+        features_data = data.get("features", {})
+        features = ProjectFeatures(
+            design=features_data.get("design", False),
+            implementation=features_data.get("implementation", False)
+        )
+        
+        metadata = ProjectMetadata(
+            schema_version=data["schema_version"],
+            project_id=data["project_id"],
+            project_name=data["project_name"],
+            customer_name=data["customer_name"],
+            project_type=data["project_type"],
+            stage=data["stage"],
+            created_at=data["created_at"],
+            updated_at=data["updated_at"],
+            features=features
+        )
+        
+        tasks = []
+        for t in data.get("tasks", []):
+            valid_fields = {f.name for f in dataclasses.fields(Task)}
+            filtered_t = {k: v for k, v in t.items() if k in valid_fields}
+            tasks.append(Task(**filtered_t))
             
-            metadata = ProjectMetadata(
-                schema_version=data["schema_version"],
-                project_id=data["project_id"],
-                project_name=data["project_name"],
-                customer_name=data["customer_name"],
-                project_type=data["project_type"],
-                stage=data["stage"],
-                created_at=data["created_at"],
-                updated_at=data["updated_at"],
-                features=features
-            )
+        artifacts = []
+        for a in data.get("artifacts", []):
+            valid_fields = {f.name for f in dataclasses.fields(Artifact)}
+            filtered_a = {k: v for k, v in a.items() if k in valid_fields}
+            artifacts.append(Artifact(**filtered_a))
+
+        deliveries = []
+        for d in data.get("deliveries", []):
+            valid_fields = {f.name for f in dataclasses.fields(Delivery)}
+            filtered_d = {k: v for k, v in d.items() if k in valid_fields}
+            deliveries.append(Delivery(**filtered_d))
             
-            return Project(path=str(directory), metadata=metadata)
-        except KeyError as e:
-            raise ValueError(f"Missing required field {e} in {project_file}")
-        except Exception as e:
-            raise ValueError(f"Failed to read or parse project at {project_file}: {e}")
+        return Project(
+            path=str(directory), 
+            metadata=metadata,
+            template_id=data.get("template_id", ""),
+            tasks=tasks,
+            artifacts=artifacts,
+            deliveries=deliveries
+        )
 
     def create_project(self, project: Project) -> None:
         """
-        Saves a new project to disk (project.json).
+        Saves a project to disk (project.json).
         """
         project_dir = Path(project.path)
         project_dir.mkdir(parents=True, exist_ok=True)
@@ -79,7 +101,14 @@ class ProjectRepository:
             "features": {
                 "design": project.metadata.features.design,
                 "implementation": project.metadata.features.implementation
-            }
+            },
+            "template_id": project.template_id,
+            "tasks": [dataclasses.asdict(t) for t in project.tasks],
+            "artifacts": [dataclasses.asdict(a) for a in project.artifacts],
+            "deliveries": [dataclasses.asdict(d) for d in project.deliveries]
         }
         
         write_json_atomic(project_file, data)
+
+    def save_project(self, project: Project) -> None:
+        self.create_project(project)

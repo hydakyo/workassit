@@ -1,17 +1,19 @@
 import logging
 from concurrent.futures import ThreadPoolExecutor
-from typing import List, Callable
+from typing import List, Callable, Optional
 
 from app.models.project import Project
 from app.repositories.project_repository import ProjectRepository
 from app.config.settings import AppSettings
 from app.utils.path_validator import normalize_path
+from app.database.indexer import Indexer
 
 logger = logging.getLogger(__name__)
 
 class WorkspaceScanService:
-    def __init__(self, project_repo: ProjectRepository):
+    def __init__(self, project_repo: ProjectRepository, indexer: Optional[Indexer] = None):
         self.project_repo = project_repo
+        self.indexer = indexer
         self.executor = ThreadPoolExecutor(max_workers=1)
 
     def scan_workspaces_async(
@@ -44,6 +46,8 @@ class WorkspaceScanService:
                                     project = self.project_repo.read_project(entry)
                                     if project:
                                         projects.append(project)
+                                        if self.indexer:
+                                            self.indexer.sync_project(project)
                                 except ValueError as ve:
                                     warnings.append(f"Corrupt project in {entry.name}: {ve}")
                     except OSError as e:

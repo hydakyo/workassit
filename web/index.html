@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project OS</title>
+    <!-- Modern Typography: Plus Jakarta Sans for headings, Inter for body -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Fira+Code&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Premium Animated Background -->
+    <div class="app-bg">
+        <div class="app-bg-blob"></div>
+    </div>
+
+    <div class="app-container">
+        <!-- Sidebar (Floating Glassmorphism) -->
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="logo">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                    </svg>
+                </div>
+                <h1>Project OS</h1>
+            </div>
+            
+            <nav class="nav-menu">
+                <button class="nav-item active" data-view="dashboard">
+                    <div class="nav-icon">
+                        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                    </div>
+                    <span>Dashboard</span>
+                </button>
+                <button class="nav-item" data-view="settings">
+                    <div class="nav-icon">
+                        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    </div>
+                    <span>Settings</span>
+                </button>
+            </nav>
+            
+            <div class="spacer"></div>
+            
+            <div class="user-info">
+                <div class="avatar">
+                    <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=WorkAssit" alt="User">
+                </div>
+                <div class="details">
+                    <span class="name">Workspace</span>
+                    <span class="status">Local Environment</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            
+            <!-- Dashboard View -->
+            <div id="dashboard-view" class="view active">
+                <div class="header glass-header">
+                    <div class="header-content">
+                        <div>
+                            <h2>Projects</h2>
+                            <p class="subtitle">Manage your workspaces and deployments</p>
+                        </div>
+                        <div class="actions">
+                            <button class="btn btn-secondary" onclick="app.scanProjects()">
+                                <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                                <span>Sync</span>
+                            </button>
+                            <button class="btn btn-primary btn-glow" onclick="app.openNewProjectModal()">
+                                <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                                <span>New Project</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="content-scroll">
+                    <div id="projects-grid" class="projects-grid">
+                        <!-- Cards will be rendered here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings View -->
+            <div id="settings-view" class="view">
+                <div class="header glass-header">
+                    <div class="header-content">
+                        <div>
+                            <h2>Preferences</h2>
+                            <p class="subtitle">Configure application settings and AI</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="content-scroll">
+                    <div class="settings-card glass-panel form-container">
+                        <div class="form-section">
+                            <h3>Appearance</h3>
+                            <div class="form-group">
+                                <label>Theme Mode</label>
+                                <select id="setting-theme" class="input">
+                                    <option value="system">System Default</option>
+                                    <option value="light">Premium Light</option>
+                                    <option value="dark">Midnight Dark</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="form-divider"></div>
+                        
+                        <div class="form-section">
+                            <h3>Environment</h3>
+                            <div class="form-group">
+                                <label>Workspace Root Directory</label>
+                                <input type="text" id="setting-root" class="input" placeholder="e.g. C:\Workspaces">
+                                <span class="help-text">Where your project folders are stored.</span>
+                            </div>
+                        </div>
+
+                        <div class="form-divider"></div>
+
+                        <div class="form-section">
+                            <h3>Artificial Intelligence</h3>
+                            <div class="form-group">
+                                <label>AI Provider</label>
+                                <select id="setting-ai-provider" class="input">
+                                    <option value="None">Disabled</option>
+                                    <option value="OpenAI">OpenAI (GPT-4)</option>
+                                    <option value="Anthropic">Anthropic (Claude)</option>
+                                    <option value="Gemini">Google Gemini</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>API Key</label>
+                                <input type="password" id="setting-ai-key" class="input" placeholder="••••••••••••••••">
+                            </div>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button class="btn btn-primary btn-glow" onclick="app.saveSettings()">Save Configuration</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Project Details View -->
+            <div id="project-details-view" class="view">
+                <div class="header glass-header project-header-glass">
+                    <div class="header-content flex-col">
+                        <div class="back-nav" onclick="app.switchView('dashboard')">
+                            <div class="icon-circle">
+                                <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                            </div>
+                            <span>Dashboard</span>
+                        </div>
+                        <div class="project-title-area">
+                            <h2 id="pd-name">Project Name</h2>
+                            <div class="badge-tag" id="pd-customer">Customer</div>
+                        </div>
+                        
+                        <div class="tabs">
+                            <div class="tab active" data-target="tab-checklist">
+                                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+                                Tasks & Checklist
+                            </div>
+                            <div class="tab" data-target="tab-audit">
+                                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                Audit Log
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="content-scroll details-scroll">
+                    <div class="action-bar glass-panel">
+                        <button class="btn btn-primary" onclick="app.importFile()">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                            Import File
+                        </button>
+                        <button class="btn btn-warning" onclick="app.undoImport()">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path></svg>
+                            Undo
+                        </button>
+                        <button class="btn btn-success" onclick="app.createPackage()">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg>
+                            Deliver Package
+                        </button>
+                        <div class="spacer"></div>
+                        <button class="btn btn-magic" onclick="app.analyzeProject()">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                            AI Analyze
+                        </button>
+                    </div>
+
+                    <div class="tab-content active" id="tab-checklist">
+                        <div class="checklist-container glass-panel" id="checklist-items">
+                            <!-- Checklist items -->
+                        </div>
+                    </div>
+
+                    <div class="tab-content" id="tab-audit">
+                        <div class="audit-log glass-panel" id="audit-logs">
+                            <!-- Audit logs -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <div id="modal-new-project" class="modal-overlay hidden">
+        <div class="modal glass-panel">
+            <div class="modal-header">
+                <h3>Create Workspace</h3>
+                <button class="close-btn" onclick="app.closeModal('modal-new-project')">
+                    <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div class="modal-body form-container">
+                <div class="form-group">
+                    <label>Project Name</label>
+                    <input type="text" id="np-name" class="input" placeholder="e.g. NextGen API">
+                </div>
+                <div class="form-group">
+                    <label>Customer Name</label>
+                    <input type="text" id="np-customer" class="input" placeholder="e.g. Acme Corp">
+                </div>
+                <div class="form-group">
+                    <label>Project Type</label>
+                    <div class="select-wrapper">
+                        <select id="np-type" class="input">
+                            <option value="Web Application">Web Application</option>
+                            <option value="Mobile Application">Mobile Application</option>
+                            <option value="Data Pipeline">Data Pipeline</option>
+                            <option value="System Integration">System Integration</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="app.closeModal('modal-new-project')">Cancel</button>
+                <button class="btn btn-primary btn-glow" onclick="app.submitNewProject()">Create Workspace</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="toast-container" class="toast-container"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>

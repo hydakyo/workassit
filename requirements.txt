@@ -1,1 +1,5 @@
-customtkinter>=5.2.2
+fastapi>=0.109.0
+uvicorn>=0.27.0
+pywebview>=5.0.0
+keyring>=25.7.0
+pyinstaller>=6.21.0

@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "project_id": "14b29b56-340f-4bfa-9811-23b54e81608e",
+  "project_name": "a",
+  "customer_name": "a",
+  "project_type": "network_deployment",
+  "stage": "planning",
+  "created_at": "2026-07-16T07:56:05.969921+00:00",
+  "updated_at": "2026-07-16T07:56:05.969921+00:00",
+  "features": {
+    "design": false,
+    "implementation": false
+  }
+}

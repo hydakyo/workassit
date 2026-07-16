@@ -22,7 +22,9 @@ def test_save_and_load_settings(tmp_path: Path):
         theme="light",
         default_author="tester",
         ai_provider="OpenAI",
-        ai_api_key="secret"
+        ai_api_key="secret",
+        ai_base_url="https://gateway.example/v1",
+        ai_model="gateway-model",
     )
     repo.save_settings(settings)
     
@@ -31,3 +33,5 @@ def test_save_and_load_settings(tmp_path: Path):
     assert loaded.theme == "light"
     assert loaded.ai_provider == "OpenAI"
     assert loaded.ai_api_key == "secret"
+    assert loaded.ai_base_url == "https://gateway.example/v1"
+    assert loaded.ai_model == "gateway-model"

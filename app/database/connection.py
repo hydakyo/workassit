@@ -21,7 +21,7 @@ class DatabaseManager:
         conn.execute("PRAGMA foreign_keys = ON")
         return conn
 
-    def _init_db(self):
+    def _init_db(self) -> None:
         with self.get_connection() as conn:
             cursor = conn.cursor()
             

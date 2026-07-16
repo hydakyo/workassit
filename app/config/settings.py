@@ -9,3 +9,5 @@ class AppSettings:
     default_author: str = ""
     ai_provider: str = "None"
     ai_api_key: str = ""
+    ai_base_url: str = ""
+    ai_model: str = "gpt-4o-mini"

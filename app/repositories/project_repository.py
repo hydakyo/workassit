@@ -2,6 +2,7 @@ import logging
 from pathlib import Path
 from typing import Optional
 import dataclasses
+from datetime import datetime, timezone
 
 from app.models.project import Project, ProjectMetadata, ProjectFeatures
 from app.models.domain import Task, Artifact, Delivery
@@ -111,4 +112,5 @@ class ProjectRepository:
         write_json_atomic(project_file, data)
 
     def save_project(self, project: Project) -> None:
+        project.metadata.updated_at = datetime.now(timezone.utc).isoformat()
         self.create_project(project)

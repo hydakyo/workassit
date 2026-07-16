@@ -33,7 +33,9 @@ class SettingsRepository:
                 theme=data.get("theme", "dark"),
                 default_author=data.get("default_author", ""),
                 ai_provider=data.get("ai_provider", "None"),
-                ai_api_key=api_key
+                ai_api_key=api_key,
+                ai_base_url=data.get("ai_base_url", ""),
+                ai_model=data.get("ai_model", "gpt-4o-mini"),
             )
         except Exception as e:
             logger.error(f"Failed to load settings: {e}. Returning default settings.")
@@ -45,7 +47,9 @@ class SettingsRepository:
             "workspace_roots": settings.workspace_roots,
             "theme": settings.theme,
             "default_author": settings.default_author,
-            "ai_provider": settings.ai_provider
+            "ai_provider": settings.ai_provider,
+            "ai_base_url": settings.ai_base_url,
+            "ai_model": settings.ai_model,
         }
         
         # Save secure API key to keyring if provided

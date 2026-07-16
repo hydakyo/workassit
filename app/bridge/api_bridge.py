@@ -14,6 +14,7 @@ from app.repositories.project_repository import ProjectRepository
 from app.repositories.audit_repository import AuditRepository
 from app.repositories.checklist_repository import ChecklistRepository
 from app.services.ai_service import AIService
+from app.services.data_scrubber import DataScrubber
 from app.templates.loader import TemplateLoader
 
 logger = logging.getLogger(__name__)
@@ -29,8 +30,9 @@ class ApiBridge:
         delivery_service: DeliveryService,
         audit_repo: AuditRepository,
         checklist_repo: ChecklistRepository,
-        template_loader: TemplateLoader
-    ):
+        template_loader: TemplateLoader,
+        data_scrubber: DataScrubber | None = None,
+    ) -> None:
         self.settings_repo = settings_repo
         self.project_repo = project_repo
         self.scan_service = scan_service
@@ -40,6 +42,7 @@ class ApiBridge:
         self.audit_repo = audit_repo
         self.checklist_repo = checklist_repo
         self.template_loader = template_loader
+        self.data_scrubber = data_scrubber or DataScrubber()
         
         self.project_registry: Dict[str, Path] = {}
 
@@ -58,7 +61,9 @@ class ApiBridge:
             "theme": settings.theme,
             "workspace_roots": settings.workspace_roots,
             "ai_provider": settings.ai_provider,
-            "ai_key_configured": bool(settings.ai_api_key)
+            "ai_key_configured": bool(settings.ai_api_key),
+            "ai_base_url": settings.ai_base_url,
+            "ai_model": settings.ai_model,
         }
         
     def update_settings(self, payload: Dict[str, Any]) -> Dict[str, str]:
@@ -66,6 +71,8 @@ class ApiBridge:
         settings.theme = payload.get("theme", settings.theme)
         settings.workspace_roots = payload.get("workspace_roots", settings.workspace_roots)
         settings.ai_provider = payload.get("ai_provider", settings.ai_provider)
+        settings.ai_base_url = payload.get("ai_base_url", settings.ai_base_url).strip()
+        settings.ai_model = payload.get("ai_model", settings.ai_model).strip()
         
         new_key = payload.get("ai_api_key")
         if new_key:
@@ -281,8 +288,13 @@ class ApiBridge:
         if settings.ai_provider == "None":
             raise Exception("AI provider not configured. Go to Settings to add an API key.")
 
-        ai_service = AIService(settings.ai_provider, settings.ai_api_key)
-        context = self._build_project_context(project)
+        ai_service = AIService(
+            settings.ai_provider,
+            settings.ai_api_key,
+            settings.ai_base_url,
+            settings.ai_model,
+        )
+        context = self.data_scrubber.scrub(self._build_project_context(project))
 
         system_prompt = (
             "You are a senior IT Project Manager assistant. "
@@ -291,6 +303,6 @@ class ApiBridge:
             "Be concise, actionable, and data-driven based on the context below.\n\n"
             f"{context}\n"
         )
-        full_prompt = f"{system_prompt}---\nUser request: {payload['prompt']}"
+        full_prompt = f"{system_prompt}---\nUser request: {self.data_scrubber.scrub(payload['prompt'])}"
         result = ai_service.analyze_project(full_prompt)
         return {"result": result}

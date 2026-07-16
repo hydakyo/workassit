@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import List, Optional, Dict, Any
-from datetime import datetime
+from datetime import datetime, timezone
 import uuid
 
 class TaskStatus(Enum):
@@ -32,7 +32,7 @@ class Task:
     due_date: Optional[str] = None
     phase: Optional[str] = None
     category: Optional[str] = None
-    created_at: str = field(default_factory=lambda: datetime.utcnow().isoformat())
+    created_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     completed_at: Optional[str] = None
 
 @dataclass
@@ -43,7 +43,7 @@ class Artifact:
     status: str = ArtifactStatus.DRAFT.value
     version: str = "1.0"
     checksum: Optional[str] = None
-    updated_at: str = field(default_factory=lambda: datetime.utcnow().isoformat())
+    updated_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     owner: Optional[str] = None
     
 @dataclass
@@ -86,7 +86,7 @@ class Delivery:
     manifest: Dict[str, Any] = field(default_factory=dict)
     included_artifacts: List[str] = field(default_factory=list)
     checksum: str = ""
-    generated_time: str = field(default_factory=lambda: datetime.utcnow().isoformat())
+    generated_time: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     generated_by: str = ""
     approval_state: str = "Pending"
     release_notes: str = ""

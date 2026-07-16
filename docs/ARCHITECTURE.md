@@ -8,13 +8,13 @@
 
 ## 2. Tech Stack
 - Python 3.11+
-- CustomTkinter / Tkinter cho giao diện
+- PyWebView và HTML/CSS/JavaScript cho giao diện desktop
 - `pathlib` cho thao tác đường dẫn
 - JSON cho lưu trữ local storage (settings và metadata)
 - `pytest`, `ruff`, `mypy` cho kiểm thử và chất lượng code.
 
 ## 3. Core Components
-- **UI**: `main_window`, `dashboard_view`, `settings_view`.
-- **Services**: `workspace_scan_service`, `task_executor`.
+- **UI**: static frontend trong `web/`, kết nối backend qua `ApiBridge`.
+- **Services**: `workspace_scan_service`, `project_service`, `file_service`, `delivery_service`, `ai_service`.
 - **Repositories**: `settings_repository`, `project_repository`.
 - **Utils**: `atomic_json` (đảm bảo an toàn dữ liệu khi lưu JSON), `path_validator`.

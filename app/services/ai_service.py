@@ -3,13 +3,22 @@ import urllib.request
 import urllib.error
 import logging
 from typing import Optional
+from urllib.parse import urlparse
 
 logger = logging.getLogger(__name__)
 
 class AIService:
-    def __init__(self, provider: str, api_key: str):
+    def __init__(
+        self,
+        provider: str,
+        api_key: str,
+        base_url: str = "",
+        model: str = "gpt-4o-mini",
+    ) -> None:
         self.provider = provider
         self.api_key = api_key
+        self.base_url = base_url.rstrip("/")
+        self.model = model or "gpt-4o-mini"
 
     def analyze_project(self, prompt_text: str) -> Optional[str]:
         if self.provider == "None" or not self.api_key:
@@ -17,7 +26,7 @@ class AIService:
             
         if self.provider == "Gemini":
             return self._call_gemini(prompt_text)
-        elif self.provider == "OpenAI":
+        if self.provider == "OpenAI":
             return self._call_openai(prompt_text)
             
         return "Unsupported AI Provider."
@@ -51,9 +60,12 @@ class AIService:
             return f"Error: API request failed. Check API Key and network. ({e})"
             
     def _call_openai(self, prompt: str) -> Optional[str]:
-        url = "https://api.openai.com/v1/chat/completions"
+        url = f"{self.base_url or 'https://api.openai.com/v1'}/chat/completions"
+        parsed_url = urlparse(url)
+        if parsed_url.scheme != "https" or not parsed_url.netloc:
+            return "Error: OpenAI endpoint must be a valid HTTPS URL."
         data = {
-            "model": "gpt-4o-mini",
+            "model": self.model,
             "messages": [{"role": "user", "content": prompt}]
         }
         

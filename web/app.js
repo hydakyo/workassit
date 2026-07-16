@@ -71,8 +71,10 @@ class App {
         try {
             const settings = await this.callBridge('get_settings');
             document.getElementById('setting-theme').value = settings.theme;
-            document.getElementById('setting-root').value = settings.workspace_roots[0] || '';
+            document.getElementById('setting-root').value = (settings.workspace_roots || []).join('\n');
             document.getElementById('setting-ai-provider').value = settings.ai_provider;
+            document.getElementById('setting-ai-base-url').value = settings.ai_base_url || '';
+            document.getElementById('setting-ai-model').value = settings.ai_model || 'gpt-4o-mini';
             // Never expose ai_api_key back to DOM. We just show if it's configured.
             document.getElementById('setting-ai-key').placeholder = settings.ai_key_configured ? '******** (configured)' : 'Enter API key...';
             document.getElementById('setting-ai-key').value = '';
@@ -105,8 +107,13 @@ class App {
     async saveSettings() {
         const payload = {
             theme: document.getElementById('setting-theme').value,
-            workspace_roots: [document.getElementById('setting-root').value],
+            workspace_roots: document.getElementById('setting-root').value
+                .split(/\r?\n/)
+                .map(path => path.trim())
+                .filter(Boolean),
             ai_provider: document.getElementById('setting-ai-provider').value,
+            ai_base_url: document.getElementById('setting-ai-base-url').value,
+            ai_model: document.getElementById('setting-ai-model').value,
             ai_api_key: document.getElementById('setting-ai-key').value // Only sent if not empty
         };
         await this.callBridge('update_settings', payload);
@@ -239,6 +246,13 @@ class App {
         this.loadAuditLog();
     }
 
+    async undoImport() {
+        await this.callBridge('undo_import', { project_id: this.currentProject.id });
+        this.showToast('Last import undone', 'success');
+        await this.loadProjectDetails();
+        await this.loadAuditLog();
+    }
+
     async loadProjectDetails() {
         const data = await this.callBridge('get_checklist', this.currentProject.id);
         
@@ -272,7 +286,12 @@ class App {
                     
                     const info = document.createElement('div');
                     info.className = 'task-info';
-                    info.innerHTML = `<h4>${t.title}</h4><p>${t.description || ''}</p>`;
+                    const title = document.createElement('h4');
+                    title.textContent = t.title;
+                    const description = document.createElement('p');
+                    description.textContent = t.description || '';
+                    info.appendChild(title);
+                    info.appendChild(description);
                     
                     const meta = document.createElement('div');
                     meta.className = 'task-meta';
@@ -331,7 +350,9 @@ class App {
                 
                 const type = document.createElement('div');
                 type.className = 'artifact-type';
-                type.innerHTML = `<strong>${a.type}</strong>`;
+                const typeText = document.createElement('strong');
+                typeText.textContent = a.type;
+                type.appendChild(typeText);
                 
                 const pathStr = document.createElement('div');
                 pathStr.className = 'artifact-path';
@@ -400,11 +421,7 @@ class App {
             });
 
             const resultContent = document.getElementById('ai-result-content');
-            // Simple markdown-like rendering (bold, newlines)
-            const rendered = (res.result || 'No response.')
-                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                .replace(/\n/g, '<br>');
-            resultContent.innerHTML = rendered;
+            resultContent.textContent = res.result || 'No response.';
             document.getElementById('ai-result-panel').classList.remove('hidden');
         } catch (e) {
             // Error toast already handled by callBridge

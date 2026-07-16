@@ -1,9 +1,9 @@
 import logging
 import sys
 import webview
-from pathlib import Path
 
 from app.utils.logging_config import setup_logging
+from app.utils.runtime_paths import get_web_directory
 from app.repositories.settings_repository import SettingsRepository
 from app.repositories.project_repository import ProjectRepository
 from app.repositories.audit_repository import AuditRepository
@@ -52,7 +52,7 @@ def main() -> None:
         )
         
         # 5. Start PyWebView
-        html_path = str(Path(__file__).parent / 'web' / 'index.html')
+        html_path = str(get_web_directory() / "index.html")
         webview.create_window('Project OS', url=html_path, js_api=api_bridge, width=1200, height=800)
         webview.start(debug=True)
         

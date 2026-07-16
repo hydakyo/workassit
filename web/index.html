@@ -118,9 +118,9 @@
                         <div class="form-section">
                             <h3>Environment</h3>
                             <div class="form-group">
-                                <label>Workspace Root Directory</label>
-                                <input type="text" id="setting-root" class="input" placeholder="e.g. C:\Workspaces">
-                                <span class="help-text">Where your project folders are stored.</span>
+                                <label>Workspace Root Directories</label>
+                                <textarea id="setting-root" class="input" rows="3" placeholder="C:\Workspaces&#10;D:\Customer Projects"></textarea>
+                                <span class="help-text">One directory per line. The first root is used when creating a new project.</span>
                             </div>
                         </div>
 
@@ -132,10 +132,18 @@
                                 <label>AI Provider</label>
                                 <select id="setting-ai-provider" class="input">
                                     <option value="None">Disabled</option>
-                                    <option value="OpenAI">OpenAI (GPT-4)</option>
-                                    <option value="Anthropic">Anthropic (Claude)</option>
+                                    <option value="OpenAI">OpenAI-compatible</option>
                                     <option value="Gemini">Google Gemini</option>
                                 </select>
+                            </div>
+                            <div class="form-group">
+                                <label>OpenAI-compatible Base URL</label>
+                                <input type="url" id="setting-ai-base-url" class="input" placeholder="https://api.openai.com/v1">
+                                <span class="help-text">Used only with the OpenAI-compatible provider. HTTPS endpoints only.</span>
+                            </div>
+                            <div class="form-group">
+                                <label>Model</label>
+                                <input type="text" id="setting-ai-model" class="input" placeholder="gpt-4o-mini">
                             </div>
                             <div class="form-group">
                                 <label>API Key</label>
@@ -184,6 +192,7 @@
 
                 <div class="content-scroll details-scroll">
                     <div class="action-bar glass-panel">
+                        <button class="btn btn-secondary" onclick="app.undoImport()">Undo Last Import</button>
                         <button class="btn btn-success" onclick="app.createPackage()">
                             <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg>
                             Deliver Package

@@ -1,6 +1,7 @@
 import shutil
 import logging
 import json
+import tempfile
 from pathlib import Path
 from typing import Dict, List, Optional
 from datetime import datetime, timezone
@@ -20,16 +21,20 @@ class DeliveryService:
         package_name = f"{project.metadata.project_name}_Release_v{version}"
         package_name = "".join(c if c.isalnum() or c in '._-' else "_" for c in package_name)
         
-        delivery_dir = project_dir / "04_Delivery"
+        delivery_dir = project_dir / "05_Delivery"
+        if not delivery_dir.exists() and (project_dir / "04_Delivery").exists():
+            delivery_dir = project_dir / "04_Delivery"
         delivery_dir.mkdir(exist_ok=True)
         
         output_path = delivery_dir / package_name
+        archive_output_path = output_path.with_suffix(".zip")
+        if archive_output_path.exists():
+            logger.warning("Refusing to overwrite existing delivery package: %s", archive_output_path)
+            return None
         
+        staging_dir: Optional[Path] = None
         try:
-            staging_dir = project_dir / ".staging_delivery"
-            if staging_dir.exists():
-                shutil.rmtree(staging_dir)
-            staging_dir.mkdir()
+            staging_dir = Path(tempfile.mkdtemp(prefix=".staging_delivery_", dir=project_dir))
             
             # 1. Generate Manifest
             manifest_artifacts: List[Dict[str, str]] = []
@@ -42,19 +47,23 @@ class DeliveryService:
             }
             
             included_artifacts: List[str] = []
+            used_filenames: set[str] = set()
             
             # 2. Copy artifacts
             for art in project.artifacts:
                 if art.path:
                     src = project_dir / art.path
                     if src.is_file():
-                        # Copy to staging maintaining flat structure
-                        dest = staging_dir / src.name
+                        artifact_filename = src.name
+                        if artifact_filename in used_filenames:
+                            artifact_filename = f"{art.artifact_id[:8]}_{src.name}"
+                        used_filenames.add(artifact_filename)
+                        dest = staging_dir / artifact_filename
                         shutil.copy2(src, dest)
                         manifest_artifacts.append({
                             "id": art.artifact_id,
                             "type": art.type,
-                            "file": src.name
+                            "file": artifact_filename
                         })
                         included_artifacts.append(art.artifact_id)
                         
@@ -64,9 +73,6 @@ class DeliveryService:
                 
             # 3. Zip
             archive_path = shutil.make_archive(str(output_path), 'zip', str(staging_dir))
-            
-            # Clean up staging
-            shutil.rmtree(staging_dir)
             
             # 4. Create Delivery object
             delivery = Delivery(
@@ -82,3 +88,6 @@ class DeliveryService:
         except Exception as e:
             logger.error(f"Failed to create delivery package: {e}")
             return None
+        finally:
+            if staging_dir and staging_dir.exists():
+                shutil.rmtree(staging_dir, ignore_errors=True)

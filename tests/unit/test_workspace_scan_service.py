@@ -1,4 +1,3 @@
-import pytest
 from pathlib import Path
 from app.services.workspace_scan_service import WorkspaceScanService
 from app.repositories.project_repository import ProjectRepository

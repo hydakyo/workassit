@@ -4,6 +4,7 @@ from pathlib import Path
 from app.config.settings import AppSettings
 from app.config.constants import SETTINGS_FILE
 from app.utils.atomic_json import read_json, write_json_atomic
+import keyring
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +23,9 @@ class SettingsRepository:
             # Basic validation
             if data.get("schema_version") != 1:
                 logger.warning("Unknown schema version in settings.")
+                
+            # Load secure API key from keyring
+            api_key = keyring.get_password("ProjectOS", "ai_api_key") or ""
             
             return AppSettings(
                 schema_version=data.get("schema_version", 1),
@@ -29,7 +33,7 @@ class SettingsRepository:
                 theme=data.get("theme", "dark"),
                 default_author=data.get("default_author", ""),
                 ai_provider=data.get("ai_provider", "None"),
-                ai_api_key=data.get("ai_api_key", "")
+                ai_api_key=api_key
             )
         except Exception as e:
             logger.error(f"Failed to load settings: {e}. Returning default settings.")
@@ -41,7 +45,20 @@ class SettingsRepository:
             "workspace_roots": settings.workspace_roots,
             "theme": settings.theme,
             "default_author": settings.default_author,
-            "ai_provider": settings.ai_provider,
-            "ai_api_key": settings.ai_api_key
+            "ai_provider": settings.ai_provider
         }
+        
+        # Save secure API key to keyring if provided
+        try:
+            if settings.ai_api_key:
+                keyring.set_password("ProjectOS", "ai_api_key", settings.ai_api_key)
+            else:
+                # If empty, try to delete it
+                try:
+                    keyring.delete_password("ProjectOS", "ai_api_key")
+                except keyring.errors.PasswordDeleteError:
+                    pass
+        except Exception as e:
+            logger.error(f"Failed to securely save API key: {e}")
+            
         write_json_atomic(self.file_path, data)

@@ -15,18 +15,19 @@ from app.ui.main_window import MainWindow
 def main() -> None:
     # 1. Init logging
     setup_logging()
-    
-    # 1. UI Config
-    import customtkinter as ctk
-    ctk.set_appearance_mode("System")
-    ctk.set_default_color_theme("blue")
-    
     logger = logging.getLogger(__name__)
     logger.info("Starting Project OS")
     
     try:
         # 2. Init repositories
         settings_repo = SettingsRepository()
+        settings = settings_repo.load_settings()
+        
+        # 1. UI Config
+        import customtkinter as ctk
+        ctk.set_appearance_mode(settings.theme)
+        ctk.set_default_color_theme("blue")
+        
         project_repo = ProjectRepository()
         audit_repo = AuditRepository()
         checklist_repo = ChecklistRepository()

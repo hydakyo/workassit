@@ -83,10 +83,16 @@ class FileService:
         if not logs:
             return False
             
-        # Find last IMPORT or OVERWRITE
+        # Collect timestamps of already undone events
+        undone_timestamps = set()
+        for log in logs:
+            if log.action == "UNDO" and log.previous_version_path:
+                undone_timestamps.add(log.previous_version_path)
+                
+        # Find last IMPORT or OVERWRITE that hasn't been undone
         last_entry = None
         for i in range(len(logs) - 1, -1, -1):
-            if logs[i].action in ["IMPORT", "OVERWRITE"]:
+            if logs[i].action in ["IMPORT", "OVERWRITE"] and logs[i].timestamp not in undone_timestamps:
                 last_entry = logs[i]
                 break
                 
@@ -110,6 +116,7 @@ class FileService:
             action="UNDO",
             file_name=last_entry.file_name,
             destination_path=last_entry.destination_path,
+            previous_version_path=last_entry.timestamp, # Store the undone event's timestamp here
             user="System"
         )
         self.audit_repo.append_log(project_dir, undo_entry)

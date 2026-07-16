@@ -4,6 +4,10 @@ version = "0.1.0"
 description = "Project OS for network and security deployment engineers"
 authors = [{name = "Developer"}]
 requires-python = ">=3.11"
+dependencies = [
+    "keyring>=25.7.0",
+    "pyinstaller>=6.21.0",
+]
 
 [tool.ruff]
 line-length = 100

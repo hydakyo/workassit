@@ -40,13 +40,12 @@ class WorkspaceScanService:
                         # Do not use rglob to avoid infinite recursion and slow scans
                         for entry in root_path.iterdir():
                             if entry.is_dir():
-                                project = self.project_repo.read_project(entry)
-                                if project:
-                                    projects.append(project)
-                                else:
-                                    # Might be just a normal dir, not a project
-                                    # Or a corrupted project. ProjectRepository logs warnings.
-                                    pass
+                                try:
+                                    project = self.project_repo.read_project(entry)
+                                    if project:
+                                        projects.append(project)
+                                except ValueError as ve:
+                                    warnings.append(f"Corrupt project in {entry.name}: {ve}")
                     except OSError as e:
                         warnings.append(f"Error accessing directory {root_path}: {e}")
                         

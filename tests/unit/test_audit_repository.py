@@ -1,8 +1,6 @@
-import pytest
-from pathlib import Path
 from app.repositories.audit_repository import AuditRepository
 from app.models.audit import AuditEntry
-from unittest.mock import mock_open, patch
+from unittest.mock import patch
 
 def test_audit_repo_read_empty(tmp_path):
     repo = AuditRepository()

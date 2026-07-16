@@ -49,8 +49,8 @@ def test_read_corrupted_json(tmp_path: Path, repo: ProjectRepository):
     with open(project_dir / PROJECT_FILENAME, "w", encoding="utf-8") as f:
         f.write("{ invalid_json: ")
         
-    project = repo.read_project(project_dir)
-    assert project is None
+    with pytest.raises(ValueError):
+        repo.read_project(project_dir)
 
 def test_read_missing_required_fields(tmp_path: Path, repo: ProjectRepository):
     project_dir = tmp_path / "incomplete_project"
@@ -65,5 +65,5 @@ def test_read_missing_required_fields(tmp_path: Path, repo: ProjectRepository):
     with open(project_dir / PROJECT_FILENAME, "w", encoding="utf-8") as f:
         json.dump(incomplete_data, f)
         
-    project = repo.read_project(project_dir)
-    assert project is None
+    with pytest.raises(ValueError):
+        repo.read_project(project_dir)

@@ -21,18 +21,19 @@ class ProjectRepository:
             
         try:
             data = read_json(project_file)
+        except Exception as e:
+            raise ValueError(f"Invalid JSON in {project_file}: {e}")
             
-            # Minimal schema validation
-            required_fields = [
-                "schema_version", "project_id", "project_name", 
-                "customer_name", "project_type", "stage", 
-                "created_at", "updated_at"
-            ]
-            for field in required_fields:
-                if field not in data:
-                    logger.warning(f"Project metadata at {project_file} is missing required field: {field}")
-                    return None
-            
+        # Minimal schema validation
+        required_fields = [
+            "schema_version", "project_id", "project_name", 
+            "customer_name", "project_type", "stage", 
+            "created_at", "updated_at"
+        ]
+        for field in required_fields:
+            if field not in data:
+                raise ValueError(f"Missing required field '{field}' in {project_file}")
+        try:
             features_data = data.get("features", {})
             features = ProjectFeatures(
                 design=features_data.get("design", False),
@@ -52,10 +53,10 @@ class ProjectRepository:
             )
             
             return Project(path=str(directory), metadata=metadata)
-            
+        except KeyError as e:
+            raise ValueError(f"Missing required field {e} in {project_file}")
         except Exception as e:
-            logger.warning(f"Failed to read or parse project at {project_file}: {e}")
-            return None
+            raise ValueError(f"Failed to read or parse project at {project_file}: {e}")
 
     def create_project(self, project: Project) -> None:
         """

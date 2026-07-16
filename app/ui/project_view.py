@@ -88,12 +88,18 @@ class ProjectView(ctk.CTkFrame): # type: ignore
     def import_file(self) -> None:
         file_path = filedialog.askopenfilename()
         if file_path:
-            success = self.file_service.import_file(self.project, file_path)
-            if success:
-                self.status_label.configure(text="File imported successfully", text_color="green")
-                self.refresh_audit_log()
-            else:
-                self.status_label.configure(text="Failed to import file", text_color="red")
+            self.status_label.configure(text="Importing...", text_color="blue")
+            def run_import() -> None:
+                success = self.file_service.import_file(self.project, file_path)
+                self.after(0, self._on_import_complete, success)
+            threading.Thread(target=run_import, daemon=True).start()
+            
+    def _on_import_complete(self, success: bool) -> None:
+        if success:
+            self.status_label.configure(text="File imported successfully", text_color="green")
+            self.refresh_audit_log()
+        else:
+            self.status_label.configure(text="Failed to import file", text_color="red")
                 
     def undo_action(self) -> None:
         success = self.file_service.undo_last_import(self.project)
@@ -104,8 +110,13 @@ class ProjectView(ctk.CTkFrame): # type: ignore
             self.status_label.configure(text="Nothing to undo or failed", text_color="red")
             
     def create_package(self) -> None:
-        self.status_label.configure(text="Creating package...", text_color="black")
-        path = self.delivery_service.create_delivery_package(self.project)
+        self.status_label.configure(text="Creating package...", text_color="blue")
+        def run_package() -> None:
+            path = self.delivery_service.create_delivery_package(self.project)
+            self.after(0, self._on_package_complete, path)
+        threading.Thread(target=run_package, daemon=True).start()
+        
+    def _on_package_complete(self, path: str | None) -> None:
         if path:
             self.status_label.configure(text=f"Package created: {Path(path).name}", text_color="green")
         else:
@@ -134,16 +145,15 @@ class ProjectView(ctk.CTkFrame): # type: ignore
         self.checklist_items = self.checklist_repo.load_checklist(Path(self.project.path))
         
         for item in self.checklist_items:
-            # We capture `item` in lambda using default arg `i=item`
+            var = ctk.StringVar(value="on" if item.is_completed else "off")
             cb = ctk.CTkCheckBox(
                 self.checklist_frame, 
-                text=item.title, 
-                command=lambda i=item: self.toggle_task(i, cb.get()), # type: ignore
+                text=item.title,
+                variable=var,
+                command=lambda i=item, v=var: self.toggle_task(i, v.get()),
                 onvalue="on", 
                 offvalue="off"
             )
-            if item.is_completed:
-                cb.select()
             cb.pack(anchor="w", padx=10, pady=5)
             
     def refresh_audit_log(self) -> None:

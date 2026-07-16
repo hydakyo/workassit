@@ -1,0 +1,13 @@
+- Chỉ triển khai phase đang được yêu cầu.
+- Không đặt business logic lớn trong `main.py`.
+- File dự án phải tiếp tục truy cập trực tiếp được trên filesystem.
+- Không scan toàn bộ ổ đĩa. Chỉ scan trong các `workspace_roots`.
+- Không ghi đè hoặc xóa file ngầm.
+- Không chạy filesystem scan hoặc tác vụ I/O dài trên UI thread.
+- Không lưu password, API key, token hoặc nội dung config nhạy cảm vào log.
+- Tất cả public function và method phải có type hints.
+- Phải có error handling.
+- Phải chạy `ruff`, `mypy` và `pytest` trước khi kết luận. Không tuyên bố PASS nếu lệnh chưa thực sự chạy thành công.
+- Không tự triển khai chức năng của phase sau.
+- Không thêm production dependency mới nếu không thực sự cần thiết.
+- Khi thay đổi hành vi, phải bổ sung hoặc cập nhật test.

@@ -27,7 +27,9 @@ class SettingsRepository:
                 schema_version=data.get("schema_version", 1),
                 workspace_roots=data.get("workspace_roots", []),
                 theme=data.get("theme", "dark"),
-                default_author=data.get("default_author", "")
+                default_author=data.get("default_author", ""),
+                ai_provider=data.get("ai_provider", "None"),
+                ai_api_key=data.get("ai_api_key", "")
             )
         except Exception as e:
             logger.error(f"Failed to load settings: {e}. Returning default settings.")
@@ -38,6 +40,8 @@ class SettingsRepository:
             "schema_version": settings.schema_version,
             "workspace_roots": settings.workspace_roots,
             "theme": settings.theme,
-            "default_author": settings.default_author
+            "default_author": settings.default_author,
+            "ai_provider": settings.ai_provider,
+            "ai_api_key": settings.ai_api_key
         }
         write_json_atomic(self.file_path, data)

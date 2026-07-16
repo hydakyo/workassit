@@ -18,17 +18,16 @@ def test_save_and_load_settings(tmp_path: Path):
     
     settings = AppSettings(
         schema_version=1,
-        workspace_roots=["C:/root1", "D:/root2"],
+        workspace_roots=["root1", "root2"],
         theme="light",
-        default_author="Admin"
+        default_author="tester",
+        ai_provider="OpenAI",
+        ai_api_key="secret"
     )
-    
     repo.save_settings(settings)
     
-    # Load again
-    repo2 = SettingsRepository(file_path=settings_file)
-    loaded = repo2.load_settings()
-    
+    loaded = repo.load_settings()
+    assert loaded.workspace_roots == ["root1", "root2"]
     assert loaded.theme == "light"
-    assert len(loaded.workspace_roots) == 2
-    assert "C:/root1" in loaded.workspace_roots
+    assert loaded.ai_provider == "OpenAI"
+    assert loaded.ai_api_key == "secret"
